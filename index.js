@@ -43,13 +43,26 @@ async function run() {
     const serviceCollection = client.db('motorMechanic').collection('services');
     const orderCollection = client.db('motorMechanic').collection('orders');
 
-    // get all services for show to UI 67-3
+    // get all services for show to UI 67-3 // shorting 70-5_1,2,3. // searching 70-5_4
     app.get('/services', async (req, res) => {
-      const query = {};
-      const cursor = serviceCollection.find(query);
-      const services = await cursor.toArray();
-      res.send(services);
+		const search = req.query.search
+		console.log(search);
+		let query = {};
+		if (search.length) {
+			query = {
+				$text: {
+					$search: search
+				}
+			}
+
+		}
+		const order = req.query.order === 'asc' ? 1 : -1;
+		const cursor = serviceCollection.find(query).sort({ price: order });
+		const services = await cursor.toArray();
+		res.send(services);
     });
+
+
     // get one service (specific) with service id 67-3
     app.get('/services/:id', async (req, res) => {
       const id = req.params.id;
