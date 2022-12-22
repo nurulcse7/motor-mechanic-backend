@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-// const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const app = express();
@@ -16,3 +16,76 @@ app.listen(port, () => {
   console.log('motor Mechanic port is running', port);
 });
 
+const uri =
+  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.70yiu6o.mongodb.net/?retryWrites=true&w=majority`;
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverApi: ServerApiVersion.v1,
+});
+
+async function run() {
+	try {
+	  const serviceCollection = client.db('motorMechanic').collection('services');
+	  const orderCollection = client.db('motorMechanic').collection('orders');
+  
+	  // get all services for show to UI 67-3
+	  app.get('/services', async (req, res) => {
+		const query = {};
+		const cursor = serviceCollection.find(query);
+		const services = await cursor.toArray();
+		res.send(services);
+	  });
+  // get one service (specific) with service id 67-3
+	  app.get('/services/:id', async (req, res) => {
+		const id = req.params.id;
+		const query = { _id: ObjectId(id) };
+		const service = await serviceCollection.findOne(query);
+		res.send(service);
+	  });
+// create a order when user submit 67-5
+	  app.post('/orders', async (req, res) => {
+		const order = req.body;
+		const result = await orderCollection.insertOne(order);
+		res.send(result);
+	  });
+  
+	  // orders api 67-6 // get orders from database
+	  app.get('/orders', async (req, res) => {
+		let query = {};
+		if (req.query.email) {
+		  query = {
+			email: req.query.email,
+		  };
+		}
+		const cursor = orderCollection.find(query);
+		const orders = await cursor.toArray();
+		res.send(orders);
+	  });
+
+	  // delete a order from UI and db 67-8
+	  app.delete('/orders/:id', async (req, res) => {
+		const id = req.params.id;
+		const query = { _id: ObjectId(id) };
+		const result = await orderCollection.deleteOne(query);
+		res.send(result);
+	  });
+  
+  // update order status 67-9
+	  app.patch('/orders/:id', async (req, res) => {
+		const id = req.params.id;
+		const status = req.body.status;
+		const query = { _id: ObjectId(id) };
+		const updatedDoc = {
+		  $set: {
+			status: status,
+		  },
+		};
+		const result = await orderCollection.updateOne(query, updatedDoc);
+		res.send(result);
+	  });
+
+	} finally {
+	}
+  }
+  run().catch((err) => console.error(err));
