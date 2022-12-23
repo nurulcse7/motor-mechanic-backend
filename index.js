@@ -154,6 +154,12 @@ async function run() {
       );
     }
   });
+  app.get('/orders/by-transaction-id/:id', async (req, res) => {
+    const { id } = req.params;
+    const order = await orderCollection.findOne({ transactionId: id });
+    console.log(id, order);
+    res.send(order);
+  });
 
   // ============= SSLCommerz Payment Gateway ====Stop here====
 
