@@ -94,7 +94,7 @@ async function run() {
         total_amount: orderedService.price,
         currency: order.currency,
         tran_id: transactionId, // use unique tran_id for each api call
-        success_url: 'http://localhost:5000/payment/success',
+        success_url: `http://localhost:5000/payment/success?transactionId=${transactionId}`,
         fail_url: 'http://localhost:5000/payment/fail',
         cancel_url: 'http://localhost:5000/payment/cancel',
         ipn_url: 'http://localhost:3030/ipn',
@@ -138,20 +138,21 @@ async function run() {
   });
 
   app.post('/payment/success', async (req, res) => {
-    console.log('Success')
-    // const { transactionId } = req.query;
+    // console.log('Success')
+    const { transactionId } = req.query;
+    // console.log(transactionId)
     // if (!transactionId) {
     //   return res.redirect(`${process.env.CLIENT_URL}/payment/fail`);
     // }
-    // const result = await orderCollection.updateOne(
-    //   { transactionId },
-    //   { $set: { paid: true, paidAt: new Date() } }
-    // );
-    // if (result.modifiedCount > 0) {
-    //   res.redirect(
-    //     `${process.env.CLIENT_URL}/payment/success?transactionId=${transactionId}`
-    //   );
-    // }
+    const result = await orderCollection.updateOne(
+      { transactionId },
+      { $set: { paid: true, paidAt: new Date() } }
+    );
+    if (result.modifiedCount > 0) {
+      res.redirect(`http://localhost:3000/payment/success?transactionId=${transactionId}`
+        // `${process.env.CLIENT_URL}/payment/success?transactionId=${transactionId}`
+      );
+    }
   });
 
   // ============= SSLCommerz Payment Gateway ====Stop here====
