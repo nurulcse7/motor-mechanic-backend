@@ -94,9 +94,9 @@ async function run() {
         total_amount: orderedService.price,
         currency: order.currency,
         tran_id: transactionId, // use unique tran_id for each api call
-        success_url: 'http://localhost:3030/success',
-        fail_url: 'http://localhost:3030/fail',
-        cancel_url: 'http://localhost:3030/cancel',
+        success_url: 'http://localhost:5000/payment/success',
+        fail_url: 'http://localhost:5000/payment/fail',
+        cancel_url: 'http://localhost:5000/payment/cancel',
         ipn_url: 'http://localhost:3030/ipn',
         shipping_method: 'Courier',
         product_name: 'Computer.',
@@ -110,7 +110,7 @@ async function run() {
         cus_state: 'Dhaka',
         cus_postcode: '1000',
         cus_country: 'Bangladesh',
-        cus_phone: '01711111111',
+        cus_phone: order.phone,
         cus_fax: '01711111111',
         ship_name: 'Customer Name',
         ship_add1: 'Dhaka',
@@ -126,9 +126,35 @@ async function run() {
     sslcz.init(data).then(apiResponse => {
         // Redirect the user to payment gateway
         let GatewayPageURL = apiResponse.GatewayPageURL
+        console.log(apiResponse);
+        orderCollection.insertOne({
+          ...order,
+          price: orderedService.price,
+          transactionId,
+          paid: false,
+        });
         res.send({ url: GatewayPageURL });
     });
   });
+
+  app.post('/payment/success', async (req, res) => {
+    console.log('Success')
+    // const { transactionId } = req.query;
+    // if (!transactionId) {
+    //   return res.redirect(`${process.env.CLIENT_URL}/payment/fail`);
+    // }
+    // const result = await orderCollection.updateOne(
+    //   { transactionId },
+    //   { $set: { paid: true, paidAt: new Date() } }
+    // );
+    // if (result.modifiedCount > 0) {
+    //   res.redirect(
+    //     `${process.env.CLIENT_URL}/payment/success?transactionId=${transactionId}`
+    //   );
+    // }
+  });
+
+  // ============= SSLCommerz Payment Gateway ====Stop here====
 
     // orders api 67-6 // get orders from database // verify 69-7
     app.get('/orders', verifyJWT, async (req, res) => {
